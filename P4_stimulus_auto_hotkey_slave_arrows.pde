@@ -1,62 +1,58 @@
-
+import java.lang.*;
 import java.io.*;
-//import java.awt.Robot;
-import java.awt.event.MouseEvent;
+//import java.awt.event.MouseEvent;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
-int rectSize = 300; //size of square sizes
-int margin = 90; // distance between window border and square
+int rectSize = 225; //size of square sizes
+int margin = 80; // distance between window border and square
 int textDist = 40; // distance between square and command captions
 // ON OFF
 boolean blinkModeON = false;
-
+Process process;
 //time variables
 int fps = 60;
-
+int operatingMode = 1;
 PFont arial;
 
-String commandString =  String.format("cmd /c cd %s", dataPath("P4_octopus.exe"));
-final String dir = System.getProperty("user.dir");
-void setup(String[] args) throws IOException{
+void setup(){//String[] args) throws IOException{
+  try {
+    process = Runtime.getRuntime().exec(dataPath("P4_octopus.exe"));
+   }
+  catch (IOException io) {
+     throw new RuntimeException(io);
+   }
+  
   arial = loadFont("ArialMT-32.vlw");
-  textFont(arial,32);
+  textFont(arial,20);
   // setup display
   size(displayWidth, displayHeight);
-  stroke(0);
-  smooth();
+  
   //make the window resizable
-  if (frame != null) {
+  if (surface != null) {
     surface.setResizable(true);
   }
   rectMode(CORNER);
-  sketchFullScreen();
-  frameRate(fps);  
-  background(0);
-  //start P4_octopus.exe
-  //println(commandString);
-  //Process p = Runtime.getRuntime().exec("cmd /c P4_octopus.exe");
+  //sketchFullScreen();
   
-        
+  stroke(0);
+  smooth();
+  background(0);
+  
+  frameRate(fps);
+  prepareExitHandler();
+  sysinfo();
 }
-//C:\Users\Damian\Documents\OneDrive - Aalborg Universitet\4_Semester\P4\Source\Processing\P4_stimulus_auto_hotkey_slave_arrows\
+
 void draw(){
-  println("current dir = " + dir);
-  println(commandString);
   background(0);
   fill(255);
-  ////textFont(arial,20);
   //text("fps: "+int(frameRate),10,20);
+  
   if (blinkModeON == true){
-    commandCaptions();
     /////////////////////////////////////////
-    //Top right
+    //Left
     // Number of frames in 1 blink "loop": 3    this number is used in the code
     // duration of 1 Frame [ms]: 16,667
     // Duration of 1 loop (blink fame+pause) [ms]: 50
-  
     // True frequency [Hz]: 20
     if(frameCount% 3 == 0) {
       fill(200);
@@ -64,10 +60,11 @@ void draw(){
     else{
       fill(0);
     }
-    rect(width-margin-rectSize, margin, rectSize, rectSize);
+    //rect(width-margin-rectSize, margin, rectSize, rectSize);
+    triangle(width/8, height/2, width/4, height/3, width/4, height-height/3);
     
     /////////////////////////////////////////
-    // top left
+    // right
     // Number of frames in 1 blink "loop": 4 - this number is used in the code
     // duration of 1 Frame [ms]: 16,667
     // Duration of 1 loop (blink fame+pause) [ms]: 66,6666667
@@ -78,10 +75,11 @@ void draw(){
     else{
       fill(0);
     }
-    rect(margin, margin, rectSize, rectSize);
+    //rect(margin, margin, rectSize, rectSize);
+    triangle(width-width/8, height/2, width-width/4, height/3, width-width/4, height-height/3);
     
     /////////////////////////////////////////
-    //bottom left
+    //Up
     // Number of frames in 1 blink "loop": 5 - this number is used in the code
     // duration of 1 Frame [ms]: 16,667
     // Duration of 1 loop (blink fame+pause) [ms]: 83,33333333
@@ -92,10 +90,11 @@ void draw(){
     else{
       fill(0);
     }
-    rect(margin, height-margin-20-rectSize, rectSize, rectSize);
+    //rect(margin, height-margin-20-rectSize, rectSize, rectSize);
+    triangle(width/2, height/11, width/2-width/8, height/3.5, width/2+width/8, height/3.5);
     
     /////////////////////////////////////////
-    // bottom right
+    // Down
     // Number of frames in 1 blink "loop": 7 - this number is used in the code
     // duration of 1 Frame [ms]: 16,667
     // Duration of 1 loop (blink fame+pause) [ms]: 116,6666667
@@ -107,27 +106,60 @@ void draw(){
     else{
       fill(0);
     }
-    rect(width-margin-rectSize, height-margin-20-rectSize, rectSize,rectSize);
+    //rect(width-margin-rectSize, height-margin-20-rectSize, rectSize,rectSize);
+    triangle(width/2, height-height/11, width/2-width/8, height-height/3.5, width/2+width/8, height-height/3.5);
     ///////////////////////////////////////// 
+    if(frameCount% 11 == 0) {
+      fill(200);
+      rect(margin, margin, rectSize, rectSize);
+      fill(0);
+      text("SHIFT\noperating\nmodes",  margin+rectSize/2, margin+rectSize/2);
+    }
+    else{
+      fill(200);
+      text("SHIFT\noperating\nmodes",  margin+rectSize/2, margin+rectSize/2);
+    }
+    commandCaptions();
   }
-  else {
+  else { //if (blinkModeON == false)
     textAlign(CENTER);
     //textFont(arial,20);
     text("Press 'CTRL+E' to start recording EEG and start stimulus.\nPress 'E' to start stimulus.",width/2,height/2);
-    textAlign(LEFT);
+    //textAlign(LEFT);
   }
 }
 
 void commandCaptions(){
   fill(255);
-  //textFont(arial,20);
-  text("Command 1", margin, margin+textDist+rectSize);
-  text("Command 2", width-margin-rectSize, margin+textDist+rectSize);
-  text("Command 3", margin, height-margin-rectSize-textDist); //margin, margin+textDist+rectSize);
-  text("Command 4", width-margin-rectSize, height-margin-rectSize-textDist);
   textAlign(CENTER);
-  text("Press 'Q' to stop stimulus.",width/2,height/2);
-  textAlign(LEFT);
+  switch(operatingMode){
+    case 1:
+      text("LEFT 20Hz", width/3.5, height/2);
+      text("RIGHT 15Hz", width-width/3.5, height/2);
+      text("UP 12Hz", width/2, height/3);
+      text("DOWN 8,57Hz",  width/2, height-height/3);
+      break;
+    case 2:
+      text("LEFT 20Hz", width/3.5, height/2);
+      text("RIGHT 15Hz", width-width/3.5, height/2);
+      text("AWAY 12Hz", width/2, height/3);
+      text("TOWARDS 8,57Hz",  width/2, height-height/3);
+      break;
+    case 3:
+      text("AWAY 20Hz", width/3.5, height/2);
+      text("TOWARDS 15Hz", width-width/3.5, height/2);
+      text("UP 12Hz", width/2, height/3);
+      text("DOWN 8,57Hz",  width/2, height-height/3);
+      break;
+  }
+  
+  
+  
+  text("Press 'Q' to stop stimulus.\nPress 'S' to switch operating mode.",width/2,height/2);
+  textSize(32);
+  text("operating mode: "+operatingMode,  margin+rectSize/2, margin+rectSize+40);
+  textSize(20);
+  text("shift 5,45Hz",  margin+rectSize+50, margin);
 }
 
 void keyReleased() {
@@ -137,14 +169,22 @@ void keyReleased() {
   if (key == 'Q' || key == 'q'){
     blinkModeON = false;
   }
+  if (key == 'S' || key == 's'){
+    if (blinkModeON ==true){
+      operatingMode++;
+      if (operatingMode > 3){
+        operatingMode = 1;
+      }
+      println("operating mode: "+operatingMode);
+    }
+  }
 }
-
 
 void sysinfo() {
   println( "__SYS INFO :");
   println( "System     : " + System.getProperty("os.name") + "  " + System.getProperty("os.version") + "  " + System.getProperty("os.arch") );
   println( "JAVA       : " + System.getProperty("java.home")  + " rev: " +javaVersionName);
-  //println( System.getProperty("java.class.path") );
+  println( System.getProperty("java.class.path") );
   //println( "\n" + isGL() + "\n" );
   println( "OPENGL     : VENDOR " + PGraphicsOpenGL.OPENGL_VENDOR+" RENDERER " + PGraphicsOpenGL.OPENGL_RENDERER+" VERSION " + PGraphicsOpenGL.OPENGL_VERSION+" GLSL_VERSION: " + PGraphicsOpenGL.GLSL_VERSION);
   println( "user.home  : " + System.getProperty("user.home") );
@@ -155,4 +195,15 @@ void sysinfo() {
   println( "dataFile   : " + dataFile("") );
   println( "frameRate  :  actual "+nf(frameRate, 0, 1));
   println( "canvas     : width "+width+" height "+height+" pix "+(width*height));
+}
+
+private void prepareExitHandler () {
+  Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+    public void run () {
+      System.out.println("SHUTDOWN HOOK");
+      // application exit code here
+      process.destroy();
+      println("window closed");
+  }
+}));
 }
