@@ -12,6 +12,9 @@ Process process;
 int fps = 60;
 int operatingMode = 1;
 PFont arial;
+int lookHere = int(random(1, 5));
+int shiftMid = 35;
+float circX, circY;
 
 void setup(){//String[] args) throws IOException{
   try {
@@ -20,6 +23,8 @@ void setup(){//String[] args) throws IOException{
   catch (IOException io) {
      throw new RuntimeException(io);
    }
+  
+  ellipseMode(RADIUS);
   
   arial = loadFont("ArialMT-32.vlw");
   textFont(arial,20);
@@ -31,6 +36,7 @@ void setup(){//String[] args) throws IOException{
     surface.setResizable(true);
   }
   rectMode(CORNER);
+  ellipseMode(RADIUS);
   //sketchFullScreen();
   
   stroke(0);
@@ -47,6 +53,25 @@ void draw(){
   fill(255);
   //text("fps: "+int(frameRate),10,20);
   
+  switch(lookHere){
+    case 1:
+      circX = width/8;
+      circY = height/2;
+      break;
+    case 2:
+    circX = width-width/8;
+    circY = height/2;
+      break;
+    case 3:
+    circX = width/2;
+    circY = height/11-shiftMid;
+      break;
+    case 4:
+    circX = width/2;
+    circY = height-height/11+shiftMid;
+      break;
+  }
+  ellipse(circX, circY, 20, 20);
   if (blinkModeON == true){
     /////////////////////////////////////////
     //Left
@@ -91,7 +116,7 @@ void draw(){
       fill(0);
     }
     //rect(margin, height-margin-20-rectSize, rectSize, rectSize);
-    triangle(width/2, height/11, width/2-width/8, height/3.5, width/2+width/8, height/3.5);
+    triangle(width/2, height/11-shiftMid, width/2-width/8, height/3.5-shiftMid, width/2+width/8, height/3.5-shiftMid);
     
     /////////////////////////////////////////
     // Down
@@ -107,7 +132,7 @@ void draw(){
       fill(0);
     }
     //rect(width-margin-rectSize, height-margin-20-rectSize, rectSize,rectSize);
-    triangle(width/2, height-height/11, width/2-width/8, height-height/3.5, width/2+width/8, height-height/3.5);
+    triangle(width/2, height-height/11+shiftMid, width/2-width/8, height-height/3.5+shiftMid, width/2+width/8, height-height/3.5+shiftMid);
     ///////////////////////////////////////// 
     if(frameCount% 11 == 0) {
       fill(200);
@@ -168,6 +193,7 @@ void keyReleased() {
   }
   if (key == 'Q' || key == 'q'){
     blinkModeON = false;
+    lookHere = int(random(1, 5));
   }
   if (key == 'S' || key == 's'){
     if (blinkModeON ==true){
