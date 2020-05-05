@@ -3,6 +3,8 @@ clear
 
 [hdr, record] = edfread('test11.edf')
 hdr.label
+
+
 % read data for O1 and O2 and remove the mean values
 data_o1=record(9,:)-mean(record(9,:));
 data_o2=record(10,:)-mean(record(10,:));
@@ -21,10 +23,12 @@ data_rest_ssvep=data(1,1:11800);
 
 [r,c]=size(data_rest);
 Fs = 128;            % Sampling frequency
+Fn = Fs/2;           % Nyquist frequency
 T = 1/Fs;             % Sampling period
 L = c;             % Length of signal
 t = (0:L-1)*T;        % Time vector
 
+%Plot raw data
 figure(1)
 subplot(2,1,1)
     plot(t,data_rest)
@@ -34,14 +38,25 @@ subplot(2,1,2)
     ylabel('EEG O1 [microV]')
     xlabel('time [sec]')
     
-   
-Y_rest = fft(data_rest);
-Y_ssvep = fft(data_ssvep);
+
+%high-pass filter
+    %TODO
+    
+%low-pass filter
+fc = 40; %cuttoff freq of 
+[ b, a ] = butter( 4, fc / Fn, 'low' ); % compute low-pass filter coefficients
+data_rest_filtered = filtfilt( b, a, abs( data_rest ) ); % rectify and low-pass filter
+    
+[ b, a ] = butter( 4, fc / Fn, 'low' ); % compute low-pass filter coefficients
+data_ssvep_filtered = filtfilt( b, a, abs( data_ssvep ) ); % rectify and low-pass filter
+    
+Y_rest = fft(data_rest_filtered);
+Y_ssvep = fft(data_ssvep_filtered);
 
 % P2 = abs(Y_rest/L);
 % P1 = P2(1:L/2+1);
 % P1(2:end-1) = 2*P1(2:end-1);
-f = Fs*(0:(L/2))/L;
+f = Fs*(0:(L/2))/L; % what does this mean???
 
 
 figure(2)
@@ -49,11 +64,11 @@ subplot(2,1,1)
     P2 = abs(Y_rest/L);
     P1 = P2(1:L/2+1);
     P1(2:end-1) = 2*P1(2:end-1);
-    %[b,a] = butter(4, 0.1/1200, 'high');
-    %x1 = filtfilt(b,a,P1);
-    %[b,a] = butter(4, 100/1200, 'low');
-    %x2 = filtfilt(b,a,x1);
-    %plot(f,x2)
+    %[b,a] = butter(4, 0.1/Fn, 'high');
+%     x1 = filtfilt(b,a,P1);
+%     [b,a] = butter(4, Fc / Fn, 'low');
+%     x2 = filtfilt(b,a,x1);
+    plot(f,P1)
     
     %a=fir1(2, [0.7 0.9], 'stop');
     %y2 = filter(a,1,P1);
