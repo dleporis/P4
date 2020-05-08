@@ -12,7 +12,7 @@ Process process;
 int fps = 60;
 int operatingMode = 1;
 PFont arial;
-int lookHere = int(random(1, 5));
+int lookHere = 1;
 int shiftMid = 35;
 float circX, circY;
 
@@ -149,7 +149,10 @@ void draw(){
   else { //if (blinkModeON == false)
     textAlign(CENTER);
     //textFont(arial,20);
-    text("Press 'CTRL+E' to start recording EEG and start stimulus.\nPress 'E' to start stimulus.",width/2,height/2);
+    textSize(32);
+    text("Look at the arrow that will appear next to the circle",width/2,height/2-30);
+    textSize(20);
+    text("Press 'CTRL+E' to start recording EEG and start stimulus\nPress 'E' to start stimulus",width/2,height/2);
     //textAlign(LEFT);
   }
 }
@@ -180,7 +183,10 @@ void commandCaptions(){
   
   
   
-  text("Press 'Q' to stop stimulus.\nPress 'S' to switch operating mode.",width/2,height/2);
+  textSize(32);
+  text("Look at the arrow next to the circle",width/2,height/2-30);
+  textSize(20);
+  text("Press 'Q' to stop stimulus\nPress 'S' to switch operating mode",width/2,height/2);
   textSize(32);
   text("operating mode: "+operatingMode,  margin+rectSize/2, margin+rectSize+40);
   textSize(20);
@@ -191,11 +197,10 @@ void keyReleased() {
   if (key == 'E' || key == 'e'){
     blinkModeON = true;
   }
-  if (key == 'Q' || key == 'q'){
+  else if (key == 'Q' || key == 'q'){
     blinkModeON = false;
-    lookHere = int(random(1, 5));
   }
-  if (key == 'S' || key == 's'){
+  else if (key == 'S' || key == 's'){
     if (blinkModeON ==true){
       operatingMode++;
       if (operatingMode > 3){
@@ -203,6 +208,18 @@ void keyReleased() {
       }
       println("operating mode: "+operatingMode);
     }
+  }
+  else if (key == '1'){
+    lookHere = 1;
+  }
+  else if (key == '2'){
+    lookHere = 2;
+  }
+  else if (key == '3'){
+    lookHere = 3;
+  }
+  else if (key == '4'){
+    lookHere = 4;
   }
 }
 
