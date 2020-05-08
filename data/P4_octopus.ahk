@@ -38,10 +38,12 @@ ahk_exe Spotify.exe
 	Sleep, 100
 	
 ^e:: ; CTRL+e pressed
-	; open calculator (EEG pogram later)
+	; Open EEG EmotivXavierTestBench window to activate the recording of EEG
 	WinActivate, Recording Configration ahk_class QWidget ahk_exe EmotivXavierTestBench.exe
 	Sleep, 500														; sleep 5000ms (I guess)
-	/*WinActivate, Calculator ahk_class ApplicationFrameWindow		; change window
+	/*
+	; test on Win10 calculator in case EEG recorder is not available
+	WinActivate, Calculator ahk_class ApplicationFrameWindow		; change window
 	WinMaximize, Calculator ahk_class ApplicationFrameWindow		; maximise window
 	Sleep, 2 														; sleep 2ms 
 	Click, 200, 870 												; in calculator, click 1
@@ -50,18 +52,23 @@ ahk_exe Spotify.exe
 	Click, 1400, 990 												; in calculator, click =
 	Sleep, 10 														; sleep 10ms 
 	*/
-	Click, 224, 259
-	Sleep, 400
-	WinActivate P4_stimulus_auto_hotkey_slave ahk_class SunAwtFrame	; change window
-	WinMaximize P4_stimulus_auto_hotkey_slave ahk_class SunAwtFrame	; change window
-	Sleep, 100 													; sleep 5000ms (I guess)
-	Send, e 														; start "P4_stimulus_auto_hotkey_slave" stimulus
-	Sleep, 10000 													; sleep 10000ms (stimulus running)
-	Send, q 														; stop "P4_stimulus_auto_hotkey_slave" stimulus
 	
+	Click, 224, 259 ; click on the 'start recording' button
+	;Sleep, 500 ; to see that the recording has started
+	WinActivate P4_stimulus_auto_hotkey_slave ahk_class SunAwtFrame	; change window to stimulus
+	WinMaximize P4_stimulus_auto_hotkey_slave ahk_class SunAwtFrame	; change window
+	
+	Sleep, 5000 ; 5 seconds pre-stimulus period													; sleep 5000ms (I guess)
+	
+	Send, e ; start stimulus														; start "P4_stimulus_auto_hotkey_slave" stimulus
+	Sleep, 30000 ; 30 seconds stimulus period													; sleep 10000ms (stimulus running)
+	Send, q ; stop stimulus
+	
+	Sleep, 5000 ; 5 seconds after-stimulus period													; stop "P4_stimulus_auto_hotkey_slave" stimulus
+	
+	; Open EEG EmotivXavierTestBench window to stop the recording of EEG
 	WinActivate, Recording Configration ahk_class QWidget ahk_exe EmotivXavierTestBench.exe
-	Sleep, 1000
-	Click, 224, 259
+	Click, 224, 259 ; click on the 'stop recording' button
 	
 	/*
 	WinActivate, Calculator ahk_class ApplicationFrameWindow		; change window
