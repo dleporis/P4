@@ -4,6 +4,11 @@ clear
 [hdr, record] = edfread('test11.edf')
 hdr.label
 
+% read data for O1 and O2 and DON'T remove the mean values
+% data_o1=record(9,:);%-mean(record(9,:));
+% data_o2=record(10,:);%-mean(record(10,:));
+% data_p7=record(8,:);%-mean(record(8,:));
+% data_p8=record(11,:);%-mean(record(11,:));
 
 % read data for O1 and O2 and remove the mean values
 data_o1=record(9,:)-mean(record(9,:));
@@ -12,7 +17,7 @@ data_p7=record(8,:)-mean(record(8,:));
 data_p8=record(11,:)-mean(record(11,:));
 
 % select channel data
-data=data_o2;
+data=data_o1;
 
 % note the number of samples corresponding to rest and ssvep time windows..
 % in this case 9 min recording with 3 min rest, 3 min ssvep, and 3 min rest gave ca 68736 samples
@@ -32,26 +37,99 @@ t = (0:L-1)*T;        % Time vector
 figure(1)
 subplot(2,1,1)
     plot(t,data_rest)
-    ylabel('EEG O1 [microV]')
+    ylabel('rest EEG O1 [microV]')
 subplot(2,1,2)
     plot(t,data_ssvep)
-    ylabel('EEG O1 [microV]')
+    ylabel('ssvep EEG O1 [microV]')
     xlabel('time [sec]')
     
-
+%% filtering
+    
 %high-pass filter
-    %TODO
+fc = 3; %cuttoff freq
+[ b, a ] = butter( 4, fc / Fn, 'high' ); % compute low-pass filter coefficients
+data_rest_high_pass = filtfilt( b, a, abs( data_rest ) ); % rectify and low-pass filter
+    
+[ b, a ] = butter( 4, fc / Fn, 'high' ); % compute low-pass filter coefficients
+data_ssvep_high_pass = filtfilt( b, a, abs( data_ssvep ) ); % rectify and low-pass filter
+    
     
 %low-pass filter
-fc = 40; %cuttoff freq of 
+fc = 40; %cuttoff freq 
 [ b, a ] = butter( 4, fc / Fn, 'low' ); % compute low-pass filter coefficients
-data_rest_filtered = filtfilt( b, a, abs( data_rest ) ); % rectify and low-pass filter
+data_rest_filtered = filtfilt( b, a, abs( data_rest_high_pass ) ); % rectify and low-pass filter
     
 [ b, a ] = butter( 4, fc / Fn, 'low' ); % compute low-pass filter coefficients
-data_ssvep_filtered = filtfilt( b, a, abs( data_ssvep ) ); % rectify and low-pass filter
-    
-Y_rest = fft(data_rest_filtered);
-Y_ssvep = fft(data_ssvep_filtered);
+data_ssvep_filtered = filtfilt( b, a, abs( data_ssvep_high_pass ) ); % rectify and low-pass filter
+
+figure(2)
+subplot(2,1,1)
+    plot(t,data_rest_filtered)
+    ylabel('rest EEG O1 filtered [microV]')
+subplot(2,1,2)
+    plot(t,data_ssvep_filtered)
+    ylabel('ssvep EEG O1 filtered [microV]')
+    xlabel('time [sec]')
+
+%% Fast fourie transform of unfiiltered data
+Y_rest = fft(data_rest);
+Y_ssvep = fft(data_ssvep);
+
+stimulus_1 = 20; % left stimulus freq
+stimulus_2 = 15; % right stimulus freq
+stimulus_3 = 12; % up stimulus freq
+stimulus_4 = 8.57; % bottom stimulus freq
+
+%%
+fs = stimulus_2 %arbitrary sample frequency
+
+fbins = [(0:1/L:1-1/L)*fs];    %frequency bin vector for plotting (x axis)
+calval = L;                  %for two-sided ffts, calval should just be N for one-sided
+[fftdat] = fft(data_ssvep);
+fftmag = abs(fftdat)/calval;
+%to visualize that expected magnitude is correct
+figure(6)
+hold on
+plot(fbins, fftmag)
+%%
+disp("IMPORTANT FFT PLOTTING")
+disp("IMPORTANT FFT PLOTTING")
+disp("IMPORTANT FFT PLOTTING")
+
+%  P2 = abs(Y_rest/L);
+%  P1 = P2(1:L/2+1);
+%  P1(2:end-1) = 2*P1(2:end-1);
+f = Fs*(0:(L/2))/L; % what does this mean???
+thresholdEeg = 5;
+figure(3)
+subplot(2,1,1)
+    P2 = abs(Y_rest/L);
+    P1 = P2(1:L/2+1);
+    P1(2:end-1) = 2*P1(2:end-1);
+    plot(P1), hold on
+    line( xlim, [ thresholdEeg thresholdEeg ], 'Color', 'g' );
+
+    title('Single-Sided Amplitude Spectrum')
+    ylabel('rest |P1(f)|')
+    %plot(f,P1)
+subplot(2,1,2)
+    P2 = abs(Y_ssvep/L);
+    P1 = P2(1:L/2+1);
+    P1(2:end-1) = 2*P1(2:end-1);
+    plot(f,P1), hold on
+    line( xlim, [ thresholdEeg thresholdEeg ], 'Color', 'g' );
+    xlabel('f (Hz)')
+ylabel('ssvep |P1(f)|')
+
+%p = bandpower(signal,samplingRate,freqrange)
+P_stimulus_1 = bandpower(data_ssvep,Fs, [stimulus_1-1, stimulus_1+1])
+disp("END OF IMPORTANT FFT PLOTTING")
+disp("END OF IMPORTANT FFT PLOTTING")
+disp("END OF IMPORTANT FFT PLOTTING")
+
+%% Fast fourie transform of fiiltered data
+Y_rest_filtered = fft(data_rest_filtered);
+Y_ssvep_filtered = fft(data_ssvep_filtered);
 
 % P2 = abs(Y_rest/L);
 % P1 = P2(1:L/2+1);
@@ -59,45 +137,24 @@ Y_ssvep = fft(data_ssvep_filtered);
 f = Fs*(0:(L/2))/L; % what does this mean???
 
 
-figure(2)
+figure(4)
 subplot(2,1,1)
-    P2 = abs(Y_rest/L);
+    P2 = abs(Y_rest_filtered/L);
     P1 = P2(1:L/2+1);
     P1(2:end-1) = 2*P1(2:end-1);
-    %[b,a] = butter(4, 0.1/Fn, 'high');
-%     x1 = filtfilt(b,a,P1);
-%     [b,a] = butter(4, Fc / Fn, 'low');
-%     x2 = filtfilt(b,a,x1);
     plot(f,P1)
-    
-    %a=fir1(2, [0.7 0.9], 'stop');
-    %y2 = filter(a,1,P1);
-    %d = designfilt('bandstopiir','FilterOrder',2, ...
-               %'HalfPowerFrequency1',48,'HalfPowerFrequency2',52, ...
-               %'DesignMethod','butter','SampleRate',Fs);
-          %fvtool(d,'Fs',Fs);
-          %noise = filtfilt(d,P1);
-    %plot(f,P1)
+
     title('Single-Sided Amplitude Spectrum')
     ylabel('|P1(f)|')
-    %[b,a] = butter(2, 49/Fs, 'high');
-    %x1 = filtfilt(b,a,P1);
-    %[b,a] = butter(2, 51/Fs, 'low');
-    %x2 = filtfilt(b,a,x1);
     plot(f,P1)
 subplot(2,1,2)
-    P2 = abs(Y_ssvep/L);
+    P2 = abs(Y_ssvep_filtered/L);
     P1 = P2(1:L/2+1);
     P1(2:end-1) = 2*P1(2:end-1);
-    %a=fir1(2, [0.76 0.81], 'stop');
-    %y2 = filter(a,1,P1);
-    %d = designfilt('bandstopiir','FilterOrder',2, ...
-              % 'HalfPowerFrequency1',49,'HalfPowerFrequency2',51, ...
-              % 'DesignMethod','butter','SampleRate',Fs);
-          %fvtool(d);
-         % noise = filtfilt(d,P1)
     plot(f,P1)
     xlabel('f (Hz)')
 ylabel('|P1(f)|')
-figure(3)
-spectrogram(data_rest_ssvep,128,120,128,Fs,'yaxis');
+
+%% Spectogram
+figure(5)
+    spectrogram(data_rest_ssvep,128,120,128,Fs,'yaxis');
