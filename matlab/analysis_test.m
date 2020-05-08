@@ -17,7 +17,7 @@ data_p7=record(8,:)-mean(record(8,:));
 data_p8=record(11,:)-mean(record(11,:));
 
 % select channel data
-data=data_o1;
+data=data_o2;
 
 % note the number of samples corresponding to rest and ssvep time windows..
 % in this case 9 min recording with 3 min rest, 3 min ssvep, and 3 min rest gave ca 68736 samples
@@ -71,7 +71,7 @@ subplot(2,1,2)
     ylabel('ssvep EEG O1 filtered [microV]')
     xlabel('time [sec]')
 
-%% Fast fourie transform of unfiiltered data
+%% Fast fourier transform of unfiiltered data
 Y_rest = fft(data_rest);
 Y_ssvep = fft(data_ssvep);
 
@@ -80,33 +80,25 @@ stimulus_2 = 15; % right stimulus freq
 stimulus_3 = 12; % up stimulus freq
 stimulus_4 = 8.57; % bottom stimulus freq
 
-%%
-fs = stimulus_2 %arbitrary sample frequency
 
-fbins = [(0:1/L:1-1/L)*fs];    %frequency bin vector for plotting (x axis)
-calval = L;                  %for two-sided ffts, calval should just be N for one-sided
-[fftdat] = fft(data_ssvep);
-fftmag = abs(fftdat)/calval;
-%to visualize that expected magnitude is correct
-figure(6)
-hold on
-plot(fbins, fftmag)
 %%
 disp("IMPORTANT FFT PLOTTING")
 disp("IMPORTANT FFT PLOTTING")
 disp("IMPORTANT FFT PLOTTING")
 
+% what does this part mean???
 %  P2 = abs(Y_rest/L);
 %  P1 = P2(1:L/2+1);
 %  P1(2:end-1) = 2*P1(2:end-1);
-f = Fs*(0:(L/2))/L; % what does this mean???
+f = Fs*(0:(L/2))/L; 
+
 thresholdEeg = 5;
-figure(3)
+figure(3) 
 subplot(2,1,1)
     P2 = abs(Y_rest/L);
     P1 = P2(1:L/2+1);
     P1(2:end-1) = 2*P1(2:end-1);
-    plot(P1), hold on
+    plot(f, P1), hold on
     line( xlim, [ thresholdEeg thresholdEeg ], 'Color', 'g' );
 
     title('Single-Sided Amplitude Spectrum')
@@ -116,13 +108,20 @@ subplot(2,1,2)
     P2 = abs(Y_ssvep/L);
     P1 = P2(1:L/2+1);
     P1(2:end-1) = 2*P1(2:end-1);
-    plot(f,P1), hold on
+%     plot(f,P1), hold on
+%     line( xlim, [ thresholdEeg thresholdEeg ], 'Color', 'g' );
+    %find peaks
+    
+    [peak, peak_location] = findpeaks(P1,f);
+    plot(f,P1,peak_location,peak,'o'), hold on
     line( xlim, [ thresholdEeg thresholdEeg ], 'Color', 'g' );
     xlabel('f (Hz)')
 ylabel('ssvep |P1(f)|')
 
+
 %p = bandpower(signal,samplingRate,freqrange)
 P_stimulus_1 = bandpower(data_ssvep,Fs, [stimulus_1-1, stimulus_1+1])
+
 disp("END OF IMPORTANT FFT PLOTTING")
 disp("END OF IMPORTANT FFT PLOTTING")
 disp("END OF IMPORTANT FFT PLOTTING")
