@@ -8,7 +8,7 @@ stimulus_2 = 15; % right stimulus freq
 stimulus_3 = 12; % up stimulus freq
 stimulus_4 = 8.57; % bottom stimulus freq
 
-addpath 'C:\Users\Damian\Documents\OneDrive - Aalborg Universitet\4_Semester\P4\Source\EEGrecordings'
+addpath 'C:\Users\Damian\Documents\OneDrive - Aalborg Universitet\4_Semester\P4\Source\EEGrecordings\test60s'
 for group = 1:1:4
     switch group
         case 1
