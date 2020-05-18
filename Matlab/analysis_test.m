@@ -1,15 +1,26 @@
-close all
-clear
+close all;
+clc;
+clear all;
+echo off;
 fig_count = 1;
 file_names = zeros(1,60);
 file_names_number = 1;
+plot_all = false;
+% resuls matrix - final database containng results
+% filename, label - supposed stimulus freq,//closest frequency method// found frequency, result command, correctness 
+% //peaks in range method// found frequency, result command, correctness
+%results = zeros(60,)
+correct_instances = 0;
+correct_instances_area = 0;
 stimulus_1 = 20; % left stimulus freq
 stimulus_2 = 15; % right stimulus freq
 stimulus_3 = 12; % up stimulus freq
 stimulus_4 = 8.57; % bottom stimulus freq
-
-addpath 'C:\Users\Damian\Documents\OneDrive - Aalborg Universitet\4_Semester\P4\Source\EEGrecordings\test60s'
-for group = 1:1:4
+addpath 'C:\Users\Damian\Documents\OneDrive - Aalborg Universitet\4_Semester\P4\Source\EEGrecordings'
+addpath 'C:\Users\Damian\Documents\OneDrive - Aalborg Universitet\4_Semester\P4\Source\EEGrecordings\test_60sec'
+%folder = '/Users/Damian/Documents/OneDrive - Aalborg Universitet/4_Semester/P4/Source/EEGrecordings/test_60sec'
+%addpath(folder);
+for group = 4:-1:1
     switch group
         case 1
             file_group = stimulus_1;
@@ -38,7 +49,7 @@ for group = 1:1:4
         data_p8=record(11,:)-mean(record(11,:));
 
         % select channel data
-        data=data_o1;
+        data=data_o2;
         
         [r,c]=size(data);
         Fs = 128;            % Sampling frequency
@@ -48,24 +59,25 @@ for group = 1:1:4
         t = (0:L-1)*T;        % Time vector
         trial_duration = t(L);
         
-        
-        % plot raw data
-        figure(fig_count); 
+        if plot_all == true
+            % plot raw data
+            figure(fig_count); 
             fig_count = fig_count+1;
             plot(t,data)
+        end
 %     end
 % end
         %%
         
         if trial_duration > 35
             % slice the recording
-            data_rest=data(1,1:Fs*20);
-            data_ssvep=data(1,Fs*20:Fs*40);
-            data_after_ssvep=data(1,Fs*40:L);
+            data_rest=data(1,Fs*5:Fs*15);
+            data_ssvep=data(1,Fs*25:Fs*35);
+            data_after_ssvep=data(1,Fs*45:Fs*55);
             
-            t_rest=t(1,1:Fs*20);
-            t_ssvep=t(1,Fs*20:Fs*40);
-            t_after_ssvep=t(1,Fs*40:L);
+            t_rest=t(1,Fs*5:Fs*15);
+            t_ssvep=t(1,Fs*25:Fs*35);
+            t_after_ssvep=t(1,Fs*45:Fs*55);
         else
             % slice the recording 
             data_rest=data(1,1:Fs*11);
@@ -80,21 +92,22 @@ for group = 1:1:4
         L_ssvep = length(t_ssvep);
         L_after_ssvep = length(t_after_ssvep);
         
-        %Plot raw data
-        figure(fig_count); 
-        fig_count = fig_count+1;
-        subplot(3,1,1)
+        if plot_all == true
+            %Plot raw data
+            figure(fig_count); 
+            fig_count = fig_count+1;
+            subplot(3,1,1)
             plot(t_rest,data_rest)
             ylabel('rest before ssvep EEG O1 [microV]')
-        subplot(3,1,2)
+            subplot(3,1,2)
             plot(t_ssvep,data_ssvep)
             ylabel('ssvep EEG O1 [microV]')
             xlabel('time [sec]')
-        subplot(3,1,3)
+            subplot(3,1,3)
             plot(t_after_ssvep,data_after_ssvep)
             ylabel('after ssvep EEG O1 [microV]')
             xlabel('time [sec]')
-
+        end
         %% filtering
         %{
         %high-pass filter
@@ -130,33 +143,42 @@ for group = 1:1:4
         Y_after = fft(data_after_ssvep);
         thresholdEeg = 0.5;
         
-        f = Fs*(0:(L_rest/2))/L_rest; 
+        f = Fs*(0:round(L_rest/2))/L_rest; 
         P2 = abs(Y_rest/L_rest);
-        P1 = P2(1:L_rest/2+1);
+        P1 = P2(1:round(L_rest/2+1));  % error ??????  Integer operands are required for colon operator when used as index.
         P1(2:end-1) = 2*P1(2:end-1);
        
         
         
-        figure(fig_count); 
-        fig_count = fig_count+1;
-        subplot(3,1,1)
-        plot(f, P1), hold on
-        line( xlim, [ thresholdEeg thresholdEeg ], 'Color', 'g' );
-        title_string = 'Single-Sided Amplitude Spectrum, trial label :' + file_name;
-        title(title_string);
-        ylabel('rest before ssvep |P1(f)|');
-        %plot(f,P1)
+%         figure(fig_count); 
+%         fig_count = fig_count+1;
+%         subplot(3,1,1)
+%         plot(f, P1), hold on
+%         line( xlim, [ thresholdEeg thresholdEeg ], 'Color', 'g' );
+%         title_string = 'SSVEP Amplitude Spectrum, trial label :' + file_name;
+%         title(title_string);
+%         ylabel('rest before ssvep |P1(f)|');
+%         %plot(f,P1)
         
         f = Fs*(0:round(L_ssvep/2))/L_ssvep;
         P2 = abs(Y_ssvep/L_ssvep);
-        P1 = P2(1:round(L_ssvep/2+1));
+        P1 =  P2(1:round(L_ssvep/2+1));
+        
         P1(2:end-1) = 2*P1(2:end-1);
 
         %% find STRONGEST SSVEP
         % frequency in graph closest to stimulus_1 freq.
+        s_freq_marg = 25;
         [c, index_s_1] = min(abs(f-stimulus_1));
         s_1_val = P1(index_s_1);
         fprintf('value pre-range: %d', s_1_val)
+        
+        s_1_area = 0;
+        for i = index_s_1-s_freq_marg: index_s_1+s_freq_marg
+            trapezoid_area = 0.5*(f(i+1)-f(i))*(P1(i)+P1(i+1));
+            s_1_area = s_1_area + trapezoid_area;
+        end
+        
         [pks, locs] = findpeaks(P1);
 
         % frequency in graph closest to stimulus_1 freq.
@@ -164,17 +186,38 @@ for group = 1:1:4
         s_2_val = P1(index_s_2);
         fprintf('value pre-range: %d', s_2_val)
         
+        s_2_area = 0;
+        for i = index_s_2-s_freq_marg: index_s_2+s_freq_marg
+            trapezoid_area = 0.5*(f(i+1)-f(i))*(P1(i)+P1(i+1));
+            s_2_area = s_2_area + trapezoid_area;
+        end
+        
+        
         % frequency in graph closest to stimulus_1 freq.
         [c, index_s_3] = min(abs(f-stimulus_3));
         s_3_val = P1(index_s_3);
         fprintf('value pre-range: %d', s_3_val)
+        
+        s_3_area = 0;
+        for i = index_s_3-s_freq_marg: index_s_3+s_freq_marg
+            trapezoid_area = 0.5*(f(i+1)-f(i))*(P1(i)+P1(i+1));
+            s_3_area = s_3_area + trapezoid_area;
+        end
+        
         
         % frequency in graph closest to stimulus_1 freq.
         [c, index_s_4] = min(abs(f-stimulus_4));
         s_4_val = P1(index_s_4);
         fprintf('value pre-range: %d', s_4_val)
         
-        % find the strongest stimulus freq
+        s_4_area = 0;
+        for i = index_s_4-s_freq_marg: index_s_4+s_freq_marg
+            trapezoid_area = 0.5*(f(i+1)-f(i))*(P1(i)+P1(i+1));
+            s_4_area = s_4_area + trapezoid_area;
+        end
+        
+        
+        %% find the strongest stimulus freq
         strongest_stimulus = max([s_1_val, s_2_val, s_3_val, s_4_val]);
 
         %just for reference
@@ -186,26 +229,116 @@ for group = 1:1:4
         if strongest_stimulus >= thresholdEeg
             if strongest_stimulus == s_1_val
                 strongest_stimulus_idx = index_s_1;
+                if file_group == 20
+                    spot_on = 1;
+                else
+                    spot_on = 0;
+                end
                 disp("LEFT")
+                disp(spot_on)
             elseif strongest_stimulus == s_2_val
                 strongest_stimulus_idx = index_s_2;
+                if file_group == 15
+                    spot_on = 1;
+                else
+                    spot_on = 0;
+                end
                 disp("RIGHT")
+                disp(spot_on)
             elseif strongest_stimulus == s_3_val
                 strongest_stimulus_idx = index_s_3;
+                if file_group == 12
+                    spot_on = 1;
+                else
+                    spot_on = 0;
+                end
                 disp("UP")
+                disp(spot_on)
             elseif strongest_stimulus == s_4_val
                 strongest_stimulus_idx = index_s_4;
+                if file_group == 8
+                    spot_on = 1;
+                else
+                    spot_on = 0;
+                end
                 disp("DOWN")
+                disp(spot_on)
             end
+            disp(spot_on)
+            ssvep_selected = true;
         else
             disp("no SSVEP strong enough")
-            strongest_stimulus_idx = 0;
+            spot_on = 0;
+            disp(spot_on)
+            ssvep_selected = false;
         end
+        
+        correct_instances = correct_instances + spot_on;
+        
+         %% find the strongest stimulus AREA
+        strongest_stimulus_area = max([s_1_area, s_2_area, s_3_area, s_4_area]);
 
+        %just for reference
+        %stimulus_1 = 20; % left stimulus freq
+        %stimulus_2 = 15; % right stimulus freq
+        %stimulus_3 = 12; % up stimulus freq
+        %stimulus_4 = 8.57; % bottom stimulus freq
+        thresholdEegarea = 0.01 ;
+        if strongest_stimulus_area >= thresholdEegarea
+            
+            if strongest_stimulus_area == s_1_area
+                strongest_stimulus_idx = index_s_1;
+                if file_group == 20
+                    spot_on = 1;
+                else
+                    spot_on = 0;
+                end
+                disp("LEFT")
+                
+            elseif strongest_stimulus_area == s_2_area
+                strongest_stimulus_idx = index_s_2;
+                if file_group == 15
+                    spot_on = 1;
+                else
+                    spot_on = 0;
+                end
+                disp("RIGHT")
+                
+            elseif strongest_stimulus_area == s_3_area
+                strongest_stimulus_idx = index_s_3;
+                if file_group == 12
+                    spot_on = 1;
+                else
+                    spot_on = 0;
+                end
+                disp("UP")
+                
+            elseif strongest_stimulus_area == s_4_area
+                strongest_stimulus_idx = index_s_4;
+                if file_group == 8
+                    spot_on = 1;
+                else
+                    spot_on = 0;
+                end
+                disp("DOWN")
+            end
+            
+            ssvep_selected = true;
+        else
+            disp("no SSVEP area strong enough")
+            spot_on = 0;
+            ssvep_selected = false;
+        end
+        disp(spot_on)
+        fprintf('area: %s',strongest_stimulus_area)
+        correct_instances_area = correct_instances_area + spot_on;
+        %% Plotting
         subplot(3,1,2)    
         plot(f,P1), hold on
         line( xlim, [ thresholdEeg thresholdEeg ], 'Color', 'g' );
-        plot(f(strongest_stimulus_idx), strongest_stimulus,'ro')
+        if ssvep_selected == true
+            plot(f(strongest_stimulus_idx), strongest_stimulus,'ro')
+        end
         xlabel('f (Hz)')
         ylabel('ssvep stimulus |P1(f)|')
 
@@ -251,9 +384,11 @@ for group = 1:1:4
         ylabel('|P1(f)|')
         %}
         %% Spectogram
-        figure(fig_count); 
-        fig_count = fig_count+1;
+        if plot_all == true
+            figure(fig_count); 
+            fig_count = fig_count+1;
             spectrogram(data,128,120,128,Fs,'yaxis');
+        end
     end
 end
 %% EXAMPLE - FIND AMPLITUDE AT SPECIFIC FREQUENCY
