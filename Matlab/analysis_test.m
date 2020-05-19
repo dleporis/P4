@@ -9,6 +9,25 @@ close all;
 clc;
 clear all;
 echo off;
+%RoboDK inititalization
+RDK = Robolink;
+path = RDK.getParam('PATH_LIBRARY');
+fprintf('Available items in the station:\n');
+disp(RDK.ItemList());
+robot = RDK.Item('UR5e');
+fprintf('Robot selected:\t%s\n', robot.Name());
+robot.setVisible(1);
+frameref = robot.Parent();
+fprintf('Robot reference selected:\t%s\n', frameref.Name());
+object = RDK.Item('base');
+fprintf('Object selected:\t%s\n', object.Name());
+
+targetMap = [3,3];
+valueRow = targetMap(1);
+valueColumn = targetMap(2);
+home = RDK.Item('33');
+robot.MoveL(home);
+analysisMethod = "area" %other options: "point"; "both";
 
 fig_count = 1;
 plot_all = false;
@@ -24,8 +43,8 @@ stimulus_3 = 12; % up stimulus freq
 stimulus_4 = 8.57; % bottom stimulus freq
 
 if ispc
-    addpath 'C:\Users\Damian\Documents\OneDrive - Aalborg Universitet\4_Semester\P4\Source\EEGrecordings';
-    addpath 'C:\Users\Damian\Documents\OneDrive - Aalborg Universitet\4_Semester\P4\Source\EEGrecordings\test_60sec';
+    addpath 'D:\Stuff\processing\recordings\supervisor';
+    addpath 'D:\Stuff\processing\recordings\supervisor\test_60sec';
 
 else
     % Code to run on Mac / Linux platform
@@ -75,18 +94,21 @@ for channel = 1:2
             data_o2=record(10,:)-mean(record(10,:));
             data_p7=record(8,:)-mean(record(8,:));
             data_p8=record(11,:)-mean(record(11,:));
-
+        data1 = data_o2;
+        data2 = data_o2;
+        data12 = [data1; data2];
+        data = mean(data12);
             % select channel data
-            switch channel
-                case 1
-                    data=data_o1;
-                case 2
-                    data=data_o2;
-                case 3
-                    data=data_p7;
-                case 4
-                    data=data_p8;
-            end
+%             switch channel
+%                 case 1
+%                     data=data_o1;
+%                 case 2
+%                     data=data_o2;
+%                 case 3
+%                     data=data_p7;
+%                 case 4
+%                     data=data_p8;
+%             end
             
             %data = mean(data_o1, data_o2);
             [r,c]=size(data);
@@ -239,123 +261,192 @@ for channel = 1:2
 
 
             %% find the strongest stimulus freq value
-            strongest_stimulus = max([s_1_val, s_2_val, s_3_val, s_4_val]);
+            if analysisMethod == "point" | analysisMethod == "both"
+                strongest_stimulus = max([s_1_val, s_2_val, s_3_val, s_4_val]);
+            
+                %just for reference
+                %stimulus_1 = 20; % left stimulus freq
+                %stimulus_2 = 15; % right stimulus freq
+                %stimulus_3 = 12; % up stimulus freq
+                %stimulus_4 = 8.57; % bottom stimulus freq
 
-            %just for reference
-            %stimulus_1 = 20; % left stimulus freq
-            %stimulus_2 = 15; % right stimulus freq
-            %stimulus_3 = 12; % up stimulus freq
-            %stimulus_4 = 8.57; % bottom stimulus freq
-
-            % the strongest stimulus value found, classify the command and
-            % evaluate if the classification is "spot on"
-            thresholdEeg = 0.02;
-            if strongest_stimulus >= thresholdEeg
-                if strongest_stimulus == s_1_val
-                    strongest_stimulus_idx = index_s_1;
-                    if file_group == 20
-                        spot_on = 1;
-                    else
-                        spot_on = 0;
+                % the strongest stimulus value found, classify the command and
+                % evaluate if the classification is "spot on"
+                thresholdEeg = 0.02;
+                if strongest_stimulus >= thresholdEeg
+                    if strongest_stimulus == s_1_val
+                        strongest_stimulus_idx = index_s_1;
+                        if file_group == 20
+                            spot_on = 1;
+                        else
+                            spot_on = 0;
+                        end
+                        command = "LEFT";
+                        if targetMap(2) - 1 < 1      
+                            newPos = 1;
+                        else
+                            newPos = targetMap(2) - 1;
+                        end
+                        targetMap = [targetMap(1) newPos];
+                        valueRow = targetMap(1);
+                        valueColumn = targetMap(2);
+                    elseif strongest_stimulus == s_2_val
+                        strongest_stimulus_idx = index_s_2;
+                        if file_group == 15
+                            spot_on = 1;
+                        else
+                            spot_on = 0;
+                        end
+                        command = "RIGHT";
+                        if targetMap(2) + 1 > 5      
+                            newPos = 5;
+                        else
+                            newPos = targetMap(2) + 1;
+                        end
+                        targetMap = [targetMap(1) newPos];
+                        valueRow = targetMap(1);
+                        valueColumn = targetMap(2);
+                    elseif strongest_stimulus == s_3_val
+                        strongest_stimulus_idx = index_s_3;
+                        if file_group == 12
+                            spot_on = 1;
+                        else
+                            spot_on = 0;
+                        end
+                        command = "UP";
+                        if targetMap(1) - 1 < 1      
+                            newPos = 1;
+                        else
+                            newPos = targetMap(1) - 1;
+                        end
+                        targetMap = [newPos targetMap(2)];
+                        valueRow = targetMap(1);
+                        valueColumn = targetMap(2);
+                    elseif strongest_stimulus == s_4_val
+                        strongest_stimulus_idx = index_s_4;
+                        if file_group == 8
+                            spot_on = 1;
+                        else
+                            spot_on = 0;
+                        end
+                        command = "DOWN";
+                        if targetMap(1) + 1 > 5      
+                            newPos = 5;
+                        else
+                            newPos = targetMap(1) + 1;
+                        end
+                        targetMap = [newPos targetMap(2)];
+                        valueRow = targetMap(1);
+                        valueColumn = targetMap(2);
                     end
-                    command = "LEFT";
-                elseif strongest_stimulus == s_2_val
-                    strongest_stimulus_idx = index_s_2;
-                    if file_group == 15
-                        spot_on = 1;
-                    else
-                        spot_on = 0;
-                    end
-                    command = "RIGHT";
-                elseif strongest_stimulus == s_3_val
-                    strongest_stimulus_idx = index_s_3;
-                    if file_group == 12
-                        spot_on = 1;
-                    else
-                        spot_on = 0;
-                    end
-                    command = "UP";
-                elseif strongest_stimulus == s_4_val
-                    strongest_stimulus_idx = index_s_4;
-                    if file_group == 8
-                        spot_on = 1;
-                    else
-                        spot_on = 0;
-                    end
-                    command = "DOWN";
+                    ssvep_selected = true;
+                else
+                    fprintf("no SSVEP strong enough")
+                    spot_on = 0;
+                    ssvep_selected = false;
                 end
-                ssvep_selected = true;
+                disp(spot_on)
+                results(results_row, 3) = cellstr(command);
+                results(results_row, 4) = num2cell(spot_on);
+                correct_instances = correct_instances + spot_on;
             else
-                fprintf("no SSVEP strong enough")
-                spot_on = 0;
                 ssvep_selected = false;
             end
-            disp(spot_on)
-            results(results_row, 3) = cellstr(command);
-            results(results_row, 4) = num2cell(spot_on);
-            correct_instances = correct_instances + spot_on;
-
              %% find the strongest stimulus AREA
-            strongest_stimulus_area = max([s_1_area, s_2_area, s_3_area, s_4_area]);
+            if analysisMethod == "area" | analysisMethod == "both"
+                strongest_stimulus_area = max([s_1_area, s_2_area, s_3_area, s_4_area]);
 
-            %just for reference
-            %stimulus_1 = 20; % left stimulus freq
-            %stimulus_2 = 15; % right stimulus freq
-            %stimulus_3 = 12; % up stimulus freq
-            %stimulus_4 = 8.57; % bottom stimulus freq
+                %just for reference
+                %stimulus_1 = 20; % left stimulus freq
+                %stimulus_2 = 15; % right stimulus freq
+                %stimulus_3 = 12; % up stimulus freq
+                %stimulus_4 = 8.57; % bottom stimulus freq
 
-            % the strongest stimulus area found, classify the command and
-            % evaluate if the classification is "spot on"
-            thresholdEegarea = 0.01 ;
-            if strongest_stimulus_area >= thresholdEegarea
+                % the strongest stimulus area found, classify the command and
+                % evaluate if the classification is "spot on"
+                thresholdEegarea = 0.01 ;
+                if strongest_stimulus_area >= thresholdEegarea
 
-                if strongest_stimulus_area == s_1_area
-                    strongest_stimulus_idx = index_s_1;
-                    if file_group == 20
-                        spot_on = 1;
-                    else
-                        spot_on = 0;
+                    if strongest_stimulus_area == s_1_area
+                        area_strongest_stimulus_idx = index_s_1;
+                        if file_group == 20
+                            spot_on = 1;
+                        else
+                            spot_on = 0;
+                        end
+                        command = "LEFT";
+                        if targetMap(2) - 1 < 1      
+                            newPos = 1;
+                        else
+                            newPos = targetMap(2) - 1;
+                        end
+                        targetMap = [targetMap(1) newPos];
+                        valueRow = targetMap(1);
+                        valueColumn = targetMap(2);
+                    elseif strongest_stimulus_area == s_2_area
+                        area_strongest_stimulus_idx = index_s_2;
+                        if file_group == 15
+                            spot_on = 1;
+                        else
+                            spot_on = 0;
+                        end
+                        command = "RIGHT";
+                        if targetMap(2) + 1 > 5      
+                            newPos = 5;
+                        else
+                            newPos = targetMap(2) + 1;
+                        end
+                        targetMap = [targetMap(1) newPos];
+                        valueRow = targetMap(1);
+                        valueColumn = targetMap(2);
+                    elseif strongest_stimulus_area == s_3_area
+                       area_strongest_stimulus_idx = index_s_3;
+                        if file_group == 12
+                            spot_on = 1;
+                        else
+                            spot_on = 0;
+                        end
+                        command = "UP";
+                        if targetMap(1) - 1 < 1      
+                            newPos = 1;
+                        else
+                            newPos = targetMap(1) - 1;
+                        end
+                        targetMap = [newPos targetMap(2)];
+                        valueRow = targetMap(1);
+                        valueColumn = targetMap(2);
+                    elseif strongest_stimulus_area == s_4_area
+                        area_strongest_stimulus_idx = index_s_4;
+                        if file_group == 8
+                            spot_on = 1;
+                        else
+                            spot_on = 0;
+                        end
+                        command = "DOWN";
+                        if targetMap(1) + 1 > 5      
+                            newPos = 5;
+                        else
+                            newPos = targetMap(1) + 1;
+                        end
+                        targetMap = [newPos targetMap(2)];
+                        valueRow = targetMap(1);
+                        valueColumn = targetMap(2);
                     end
-                    command = "LEFT";
 
-                elseif strongest_stimulus_area == s_2_area
-                    strongest_stimulus_idx = index_s_2;
-                    if file_group == 15
-                        spot_on = 1;
-                    else
-                        spot_on = 0;
-                    end
-                    command = "RIGHT";
-
-                elseif strongest_stimulus_area == s_3_area
-                    strongest_stimulus_idx = index_s_3;
-                    if file_group == 12
-                        spot_on = 1;
-                    else
-                        spot_on = 0;
-                    end
-                    command = "UP";
-
-                elseif strongest_stimulus_area == s_4_area
-                    strongest_stimulus_idx = index_s_4;
-                    if file_group == 8
-                        spot_on = 1;
-                    else
-                        spot_on = 0;
-                    end
-                    command = "DOWN";
+                    area_ssvep_selected = true;
+                else
+                    fprintf("no SSVEP area strong enough")
+                    spot_on = 0;
+                    area_ssvep_selected = false;
                 end
-
-                ssvep_selected = true;
+                results(results_row, 5) = cellstr(command);
+                results(results_row, 6) = num2cell(spot_on);
+                %fprintf('area: %s',strongest_stimulus_area)
+                correct_instances_area = correct_instances_area + spot_on;
             else
-                fprintf("no SSVEP area strong enough")
-                spot_on = 0;
-                ssvep_selected = false;
+                area_ssvep_selected = false;
             end
-            results(results_row, 5) = cellstr(command);
-            results(results_row, 6) = num2cell(spot_on);
-            %fprintf('area: %s',strongest_stimulus_area)
-            correct_instances_area = correct_instances_area + spot_on;
+            
             %% Plotting
             figure(fig_count); 
             fig_count = fig_count+1;
@@ -384,6 +475,9 @@ for channel = 1:2
             line( xlim, [ thresholdEeg thresholdEeg ], 'Color', 'g' );
             if ssvep_selected == true
                 plot(f(strongest_stimulus_idx), strongest_stimulus,'ro')
+            end
+            if area_ssvep_selected == true
+                plot(f(area_strongest_stimulus_idx), 0,'go')
             end
             xlabel('f (Hz)')
             ylabel('ssvep stimulus |P1(f)|')
@@ -439,6 +533,30 @@ for channel = 1:2
                 spectrogram(data,128,120,128,Fs,'yaxis');
             end
             results_row = results_row + 1;
+            %% Move RoboDK
+
+            valueRow = targetMap(1);
+            valueColumn = targetMap(2);
+            value1 = valueColumn;
+            value10 = valueRow *10;
+            value = value10 + value1;
+            myString = num2str(value);
+
+            target1 = RDK.Item(myString);
+
+            RDK.Render(1);
+
+            fprintf('Moving by target item...\n');
+
+            RDK.setSimulationSpeed(5);
+            % for i=1:2    
+            robot.setSpeed(10000,1000);  
+            robot.MoveL(target1);
+            while robot.Busy()
+                 pause(100);
+                 fprintf('Waiting for the robot to finish...\n');
+            end
+            % end
         end
     end
     results(results_row, 4) = cellstr("Correct cmd total");
@@ -451,6 +569,7 @@ for channel = 1:2
     results_row = results_row + 1;
     
 end
+
 
 
 %% EXAMPLE - FIND AMPLITUDE AT SPECIFIC FREQUENCY
@@ -483,3 +602,5 @@ fig_count = fig_count+1;
 plot(t, y)
 grid
 %}
+
+fprintf('end')
