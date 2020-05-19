@@ -27,7 +27,7 @@ valueRow = targetMap(1);
 valueColumn = targetMap(2);
 home = RDK.Item('33');
 robot.MoveL(home);
-analysisMethod = "area" %other options: "point"; "both";
+analysisMethod = "point" %other options: "point"; "both";
 
 fig_count = 1;
 plot_all = false;
@@ -57,12 +57,12 @@ results_row = 1;
 
 %itterate through channels o1 o2 p7 p8
 for channel = 1:2
-    results(results_row, 1) = cellstr("Filename " + channel);
-    results(results_row, 2) = cellstr("Correct command " + channel);
-    results(results_row, 3) = cellstr("Detected cmd (single value) " + channel);
-    results(results_row, 4) = cellstr("Cmd correct? "  + channel);
-    results(results_row, 5) = cellstr("Detected cmd (area in freq range) " + channel);    
-    results(results_row, 6) = cellstr("Cmd correct?" + channel);
+    results(results_row, 1) = cellstr("Filename o" + channel);
+    results(results_row, 2) = cellstr("Correct command o" + channel);
+    results(results_row, 3) = cellstr("Detected cmd (single value) o" + channel);
+    results(results_row, 4) = cellstr("Cmd correct? o"  + channel);
+    results(results_row, 5) = cellstr("Detected cmd (area in freq range) o" + channel);    
+    results(results_row, 6) = cellstr("Cmd correct? o" + channel);
     results_row = results_row + 1;
     for group = 1:1:4
         switch group
@@ -94,21 +94,21 @@ for channel = 1:2
             data_o2=record(10,:)-mean(record(10,:));
             data_p7=record(8,:)-mean(record(8,:));
             data_p8=record(11,:)-mean(record(11,:));
-        data1 = data_o2;
-        data2 = data_o2;
-        data12 = [data1; data2];
-        data = mean(data12);
+            data = data_o1;
+%         data2 = data_o2;
+%         data12 = [data1; data2];
+%         data = mean(data12);
             % select channel data
-%             switch channel
-%                 case 1
-%                     data=data_o1;
-%                 case 2
-%                     data=data_o2;
-%                 case 3
-%                     data=data_p7;
-%                 case 4
-%                     data=data_p8;
-%             end
+            switch channel
+                case 1
+                    data=data_o1;
+                case 2
+                    data=data_o2;
+                case 3
+                    data=data_p7;
+                case 4
+                    data=data_p8;
+            end
             
             %data = mean(data_o1, data_o2);
             [r,c]=size(data);
@@ -345,7 +345,6 @@ for channel = 1:2
                     spot_on = 0;
                     ssvep_selected = false;
                 end
-                disp(spot_on)
                 results(results_row, 3) = cellstr(command);
                 results(results_row, 4) = num2cell(spot_on);
                 correct_instances = correct_instances + spot_on;
@@ -544,9 +543,9 @@ for channel = 1:2
 
             target1 = RDK.Item(myString);
 
-            RDK.Render(1);
-
-            fprintf('Moving by target item...\n');
+            %RDK.Render(0);
+            robot.setVisible(1);
+            fprintf('RoboDK move %s   ...   (Correct command %s) \n', command, correct_command);
 
             RDK.setSimulationSpeed(5);
             % for i=1:2    
