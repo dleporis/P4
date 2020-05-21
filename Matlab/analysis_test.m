@@ -569,7 +569,28 @@ for channel = 1:2
     
 end
 
+%% CALCULATE THE MEAN OF MULTIPLE SIGNALS
+length = 1024;
+multichannel(1,:) = ones(1, length);
+multichannel(2,:) = 2*ones(1, length);
+multichannel(3,:) = 3*ones(1, length);
+multichannel(4,:) = 4*ones(1, length);
+multichannel(5,:) = 5*ones(1, length);
+multichannel(6,:) = 6*ones(1, length);
 
+axis = 1:length;
+mean_multichannel = zeros(1,length);
+for sample = 1:length
+    mean_multichannel(sample) = mean(multichannel(:,sample));
+end
+figure(fig_count); 
+fig_count = fig_count+1;
+for channel = 1:6
+    plot(axis,multichannel(channel,:)), hold on
+end
+figure(fig_count); 
+fig_count = fig_count+1;
+plot(axis,mean_multichannel)
 
 %% EXAMPLE - FIND AMPLITUDE AT SPECIFIC FREQUENCY
 %{
