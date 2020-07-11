@@ -1,3 +1,5 @@
+Project theme: Robotic assistance for disabled patients, control via brain-computer interface
+
 Code for Steady State Visually Evoked Potential stimulation
 This is used together with EEG sensor as a BCI to control a robot.
 
